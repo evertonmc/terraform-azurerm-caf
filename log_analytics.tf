@@ -31,11 +31,8 @@ module "log_analytics_storage_insights" {
   client_config   = local.client_config
   settings        = each.value
 
-  resource_group_name = coalesce(
-    try(local.combined_objects_resource_groups[each.value.resource_group.lz_key][each.value.resource_group.key].name, null),
-    try(local.combined_objects_resource_groups[local.client_config.landingzone_key][each.value.resource_group.key].name, null),
-    try(each.value.resource_group.name, null)
-  )
+  resource_group_name = can(each.value.resource_group.name) || can(each.value.resource_group_name) ? try(each.value.resource_group.name, each.value.resource_group_name) : local.combined_objects_resource_groups[try(local.client_config.landingzone_key, each.value.resource_group.lz_key)][try(each.value.resource_group_key, each.value.resource_group.key)].name
+
   workspace_id = coalesce(
     try(local.combined_objects_log_analytics[each.value.log_analytics.lz_key][each.value.log_analytics.key].id, null),
     try(local.combined_objects_log_analytics[local.client_config.landingzone_key][each.value.log_analytics.key].id, null),
@@ -51,8 +48,6 @@ module "log_analytics_storage_insights" {
     try(local.combined_objects_storage_accounts[local.client_config.landingzone_key][each.value.storage_account.key].primary_access_key, null),
     try(each.value.storage_account.primary_access_key, null)
   )
-
-
   remote_objects = {
     resource_group  = local.combined_objects_resource_groups
     storage_account = local.combined_objects_storage_accounts
